@@ -62,11 +62,12 @@ func (node *Node) Has(key string) (has bool) {
 	}
 	if node.height == 0 {
 		return false
+	} else {
+		if key < node.key {
+			return node.getLeftNode().Has(key)
+		}
+		return node.getRightNode().Has(key)
 	}
-	if key < node.key {
-		return node.getLeftNode().Has(key)
-	}
-	return node.getRightNode().Has(key)
 }
 
 func (node *Node) Get(key string) (index int, value interface{}, exists bool) {
@@ -88,15 +89,15 @@ func (node *Node) Get(key string) (index int, value interface{}, exists bool) {
 	rightNode := node.getRightNode()
 	index, value, exists = rightNode.Get(key)
 	index += node.size - rightNode.size
-	return index, value, exists	
+	return index, value, exists
 }
 
 func (node *Node) GetByIndex(index int) (key string, value interface{}) {
 	if node.height == 0 {
-		if index != 0 {
-			panic("GetByIndex asked for invalid index")
+		if index == 0 {
+			return node.key, node.value
 		}
-		return node.key, node.value
+		panic("GetByIndex asked for invalid index")
 	}
 	// TODO: could improve this by storing the sizes
 	leftNode := node.getLeftNode()
@@ -132,6 +133,7 @@ func (node *Node) Set(key string, value interface{}) (newSelf *Node, updated boo
 			}, false
 		}
 	}
+
 	node = node._copy()
 	if key < node.key {
 		node.leftNode, updated = node.getLeftNode().Set(key, value)
@@ -174,6 +176,7 @@ func (node *Node) Remove(key string) (
 		node = node.balance()
 		return node, newKey, value, true
 	}
+
 	var newRightNode *Node
 	newRightNode, newKey, value, removed = node.getRightNode().Remove(key)
 	if !removed {
@@ -247,6 +250,9 @@ func (node *Node) calcBalance() int {
 // TODO: optimize balance & rotate
 func (node *Node) balance() (newSelf *Node) {
 	balance := node.calcBalance()
+	if balance >= -1 {
+		return node
+	}
 	if balance > 1 {
 		if node.getLeftNode().calcBalance() >= 0 {
 			// Left Left Case
@@ -257,18 +263,16 @@ func (node *Node) balance() (newSelf *Node) {
 		node.leftNode = left.rotateLeft()
 		return node.rotateRight()
 	}
-	if balance < -1 {
-		if node.getRightNode().calcBalance() <= 0 {
-			// Right Right Case
-			return node.rotateLeft()
-		}
-		// Right Left Case
-		right := node.getRightNode()
-		node.rightNode = right.rotateRight()
+
+	if node.getRightNode().calcBalance() <= 0 {
+		// Right Right Case
 		return node.rotateLeft()
 	}
-	// Nothing changed
-	return node
+
+	// Right Left Case
+	right := node.getRightNode()
+	node.rightNode = right.rotateRight()
+	return node.rotateLeft()
 }
 
 // Shortcut for TraverseInRange.
