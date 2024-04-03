@@ -296,6 +296,7 @@ func (node *Node) TraverseInRange(start, end string, ascending bool, leavesOnly 
 	if node == nil {
 		return false
 	}
+
 	afterStart := (start == "" || start < node.key)
 	startOrAfter := (start == "" || start <= node.key)
 	beforeEnd := false
@@ -314,6 +315,7 @@ func (node *Node) TraverseInRange(start, end string, ascending bool, leavesOnly 
 			return stop
 		}
 	}
+
 	if node.IsLeaf() {
 		return stop
 	}
